@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CineMatch — Movie Recommender System</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
+  <!-- Chart.js for premium interactive analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<!-- ══════════════════ PAGE LOADER ══════════════════ -->
+<div id="page-loader">
+  <!-- Cinematic video background for loader -->
+  <video class="loader-video" autoplay muted loop playsinline>
+    <source src="data/hero-video.mp4" type="video/mp4">
+  </video>
+  <div class="loader-overlay"></div>
+  <!-- 3D Film reel spinner -->
+  <div class="loader-reel">
+    <div class="reel-ring"></div>
+    <div class="reel-ring"></div>
+    <div class="reel-ring"></div>
+  </div>
+  <div class="loader-logo">CINE<span style="color:var(--text)">MATCH</span></div>
+  <div style="font-size:0.75rem;letter-spacing:0.2em;color:var(--text3);text-transform:uppercase;z-index:2">Initializing Recommendation Engine</div>
+  <div class="loader-bar"><div class="loader-bar-fill"></div></div>
+</div>
+
+<!-- ══════════════════ NAVIGATION ══════════════════ -->
+<nav class="nav">
+  <div class="nav-logo" onclick="navigateTo('home')">CINE<span>MATCH</span></div>
+
+  <div class="search-bar">
+    <input type="text" placeholder="Search movies, directors, actors..." autocomplete="off">
+    <span class="search-icon">🔍</span>
+    <div class="search-dropdown" id="search-dropdown"></div>
+  </div>
+
+  <!-- Desktop Nav Links -->
+  <div style="display:flex;gap:4px;flex-shrink:0" class="nav-links-desktop">
+    <button class="nav-link icon-btn" data-page="home" onclick="navigateTo('home')" title="Home" style="border-radius:8px;width:auto;padding:0 12px;font-size:0.85rem;gap:6px">
+      🏠 Home
+    </button>
+    <button class="nav-link icon-btn" data-page="browse" onclick="navigateTo('browse')" title="Browse" style="border-radius:8px;width:auto;padding:0 12px;font-size:0.85rem;gap:6px">
+      🎬 Browse
+    </button>
+    <button class="nav-link icon-btn" data-page="watchlist" onclick="navigateTo('watchlist')" title="Watchlist" style="border-radius:8px;width:auto;padding:0 12px;font-size:0.85rem;gap:6px">
+      🔖 Watchlist
+    </button>
+  </div>
+
+  <div class="nav-actions">
+    <!-- Theme Toggle -->
+    <button class="icon-btn" id="theme-btn" onclick="const t=appState.toggleTheme();document.getElementById('theme-btn').textContent=t==='dark'?'☀️':'🌙'" title="Toggle theme">🌙</button>
+    
+    <!-- Admin Link (if admin) -->
+    <button class="icon-btn" id="nav-admin-btn" style="display:none" onclick="navigateTo('admin')" title="Admin Panel">⚙️</button>
+
+    <!-- User Avatar -->
+    <button class="avatar-btn" id="nav-avatar-btn" style="display:none" onclick="navigateTo('profile')"></button>
+    
+    <!-- Login Button -->
+    <button class="btn nav-login-btn" id="nav-login-btn" onclick="openAuthModal()">Login</button>
+  </div>
+</nav>
+
+<!-- ══════════════════ MAIN CONTENT ══════════════════ -->
+<main>
+
+  <!-- ─── HOME PAGE ─── -->
+  <div class="page active" id="page-home">
+    <!-- Hero -->
+    <div class="hero">
+      <!-- Cinematic Video Background Layer -->
+      <video class="hero-video" id="hero-video" autoplay muted loop playsinline>
+        <source src="data/hero-video.mp4" type="video/mp4">
+      </video>
+      <!-- Poster overlay fallback (set dynamically by JS) -->
+      <div class="hero-bg" id="hero-bg"></div>
+      <!-- Floating 3D Particles -->
+      <div class="hero-particles" id="hero-particles"></div>
+      <div class="hero-gradient"></div>
+      <div class="hero-content">
+        <div class="hero-badge" id="hero-badge">🔥 Trending Now</div>
+        <h1 class="hero-title" id="hero-title">Movie Title</h1>
+        <div class="hero-meta">
+          <span id="hero-year"></span>
+          <div class="dot"></div>
+          <span id="hero-genre"></span>
+          <div class="dot"></div>
+          <span id="hero-rating" style="color:var(--accent2)"></span>
+        </div>
+        <p class="hero-desc" id="hero-desc"></p>
+        <div class="hero-actions">
+          <button class="btn btn-primary" id="hero-watch-btn">▶ View Details</button>
+          <button class="btn btn-ghost" id="hero-wl-btn">+ Watchlist</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Personalized Section -->
+    <div class="section">
+      <div class="section-header">
+        <h2 class="section-title" id="section-personalized-title">Trending <span>Now</span></h2>
+        <a class="section-link" onclick="navigateTo('browse')">View All →</a>
+      </div>
+      <div id="section-personalized"></div>
+    </div>
+
+    <!-- Top Rated -->
+    <div class="section" style="padding-top:0">
+      <div class="section-header">
+        <h2 class="section-title">Top <span>Rated</span></h2>
+        <a class="section-link" onclick="navigateTo('browse');document.getElementById('filter-sort').value='rating';filterAndRenderBrowse()">View All →</a>
+      </div>
+      <div id="section-toprated"></div>
+    </div>
+
+    <!-- Action -->
+    <div class="section" style="padding-top:0">
+      <div class="section-header">
+        <h2 class="section-title"><span>Action</span> Picks</h2>
+        <a class="section-link" onclick="setBrowseGenreFromDetail('Action')">View All →</a>
+      </div>
+      <div id="section-action"></div>
+    </div>
+
+    <!-- Sci-Fi -->
+    <div class="section" style="padding-top:0">
+      <div class="section-header">
+        <h2 class="section-title">Sci-Fi <span>Universe</span></h2>
+        <a class="section-link" onclick="setBrowseGenreFromDetail('Sci-Fi')">View All →</a>
+      </div>
+      <div id="section-scifi"></div>
+    </div>
+
+    <!-- Drama -->
+    <div class="section" style="padding-top:0">
+      <div class="section-header">
+        <h2 class="section-title">Critically Acclaimed <span>Drama</span></h2>
+        <a class="section-link" onclick="setBrowseGenreFromDetail('Drama')">View All →</a>
+      </div>
+      <div id="section-drama"></div>
+    </div>
+
+    <!-- Footer -->
+    <footer style="border-top:1px solid var(--border);padding:32px 48px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div class="nav-logo" style="font-size:1.3rem">CINE<span>MATCH</span></div>
+      <div style="font-size:0.8rem;color:var(--text3)">Content-Based ML Recommendation Engine · Built with ❤️</div>
+      <div style="font-size:0.8rem;color:var(--text3)">Admin: <code style="background:var(--surface);padding:2px 6px;border-radius:4px">admin / admin123</code></div>
+    </footer>
+  </div>
+
+  <!-- ─── BROWSE PAGE ─── -->
+  <div class="page" id="page-browse">
+    <div class="browse-header">
+      <h1 class="browse-title">Browse <span style="color:var(--accent)">Movies</span></h1>
+      <div class="browse-filters">
+        <input type="text" id="browse-search" placeholder="🔍 Search..." class="filter-select" style="min-width:200px" oninput="filterAndRenderBrowse()">
+        <select class="filter-select" id="filter-lang" onchange="filterAndRenderBrowse()">
+          <option value="all">All Languages</option>
+          <option value="english">English</option>
+          <option value="hindi">Hindi</option>
+          <option value="korean">Korean</option>
+          <option value="japanese">Japanese</option>
+          <option value="telugu">Telugu</option>
+        </select>
+        <select class="filter-select" id="filter-year" onchange="filterAndRenderBrowse()">
+          <option value="all">All Years</option>
+          <option value="2020-2030">2020s</option>
+          <option value="2010-2019">2010s</option>
+          <option value="2000-2009">2000s</option>
+          <option value="1990-1999">1990s</option>
+          <option value="1970-1989">Classic</option>
+        </select>
+        <select class="filter-select" id="filter-sort" onchange="browseSort=this.value;filterAndRenderBrowse()">
+          <option value="popularity">Sort: Popular</option>
+          <option value="rating">Sort: Rating</option>
+          <option value="year">Sort: Newest</option>
+          <option value="title">Sort: Title</option>
+        </select>
+        <span id="browse-count" style="font-size:0.82rem;color:var(--text3);margin-left:auto"></span>
+      </div>
+      <!-- Genre Chips -->
+      <div class="genre-filters">
+        <div class="genre-chip active" onclick="setBrowseGenre('All',this)">All</div>
+        <div class="genre-chip" onclick="setBrowseGenre('Action',this)">Action</div>
+        <div class="genre-chip" onclick="setBrowseGenre('Sci-Fi',this)">Sci-Fi</div>
+        <div class="genre-chip" onclick="setBrowseGenre('Drama',this)">Drama</div>
+        <div class="genre-chip" onclick="setBrowseGenre('Crime',this)">Crime</div>
+        <div class="genre-chip" onclick="setBrowseGenre('Thriller',this)">Thriller</div>
+        <div class="genre-chip" onclick="setBrowseGenre('Comedy',this)">Comedy</div>
+        <div class="genre-chip" onclick="setBrowseGenre('Animation',this)">Animation</div>
+        <div class="genre-chip" onclick="setBrowseGenre('Romance',this)">Romance</div>
+        <div class="genre-chip" onclick="setBrowseGenre('Horror',this)">Horror</div>
+        <div class="genre-chip" onclick="setBrowseGenre('Adventure',this)">Adventure</div>
+        <div class="genre-chip" onclick="setBrowseGenre('Fantasy',this)">Fantasy</div>
+        <div class="genre-chip" onclick="setBrowseGenre('History',this)">History</div>
+        <div class="genre-chip" onclick="setBrowseGenre('Music',this)">Music</div>
+      </div>
+    </div>
+    <div class="section" style="padding-top:0">
+      <div id="browse-grid"></div>
+    </div>
+  </div>
+
+  <!-- ─── WATCHLIST PAGE ─── -->
+  <div class="page" id="page-watchlist">
+    <div class="section">
+      <div class="section-header">
+        <h1 class="section-title">My <span>Watchlist</span></h1>
+      </div>
+      <div id="watchlist-container"></div>
+    </div>
+  </div>
+
+  <!-- ─── PROFILE PAGE ─── -->
+  <div class="page" id="page-profile">
+    <div id="profile-content"></div>
+  </div>
+
+  <!-- ─── ADMIN PAGE ─── -->
+  <div class="page" id="page-admin">
+    <div class="admin-header">
+      <div class="admin-title">Admin <span style="color:var(--accent)">Panel</span></div>
+      <div class="admin-subtitle">Manage movies, users, and content</div>
+    </div>
+    <div class="admin-tabs">
+      <div class="admin-tab active" data-tab="stats" onclick="renderAdminTab('stats')">📊 Dashboard</div>
+      <div class="admin-tab" data-tab="movies" onclick="renderAdminTab('movies')">🎬 Movies</div>
+      <div class="admin-tab" data-tab="users" onclick="renderAdminTab('users')">👥 Users</div>
+      <div class="admin-tab" data-tab="feedback" onclick="renderAdminTab('feedback')">💬 Reviews</div>
+    </div>
+    <div class="admin-content" id="admin-content"></div>
+  </div>
+
+</main>
+
+<!-- ══════════════════ MODALS ══════════════════ -->
+
+<!-- Movie Detail Modal -->
+<div class="modal-overlay" id="movie-detail-modal">
+  <div class="modal">
+    <div id="movie-detail-body"></div>
+  </div>
+</div>
+
+<!-- Trailer Popup Modal -->
+<div class="modal-overlay" id="trailer-modal" style="z-index:2100">
+  <div class="modal trailer-modal-content" style="max-width:800px;padding:0;background:#000;overflow:hidden;border-radius:12px;border:1px solid var(--border)">
+    <button class="modal-close" onclick="closeTrailerModal()" style="position:absolute;top:12px;right:12px;z-index:2101;background:rgba(0,0,0,0.6);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:14px;border:1px solid var(--border)">✕</button>
+    <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;width:100%">
+      <iframe id="trailer-iframe" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0" allow="autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    </div>
+  </div>
+</div>
+
+<!-- Auth Modal -->
+<div class="modal-overlay" id="auth-modal">
+  <div class="modal auth-modal">
+    <button class="modal-close" onclick="closeModal('auth-modal')" style="position:absolute;top:16px;right:16px">✕</button>
+    <div class="auth-title">🎬 CineMatch</div>
+    <div class="auth-subtitle">Your personal movie companion</div>
+    
+    <div class="auth-tabs">
+      <div class="auth-tab active" data-tab="login" onclick="setAuthTab('login')">Login</div>
+      <div class="auth-tab" data-tab="register" onclick="setAuthTab('register')">Register</div>
+    </div>
+
+    <!-- Login Form -->
+    <div id="auth-login-form">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="login-username" placeholder="Enter username" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="Enter password" autocomplete="current-password"
+               onkeypress="if(event.key==='Enter')handleLogin()">
+      </div>
+      <div class="form-error" id="login-error"></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px" onclick="handleLogin()">Login</button>
+      <div class="auth-divider">or try demo accounts</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline btn-sm" style="flex:1;justify-content:center" 
+          onclick="document.getElementById('login-username').value='admin';document.getElementById('login-password').value='admin123'">
+          ⚙️ Admin
+        </button>
+        <button class="btn btn-outline btn-sm" style="flex:1;justify-content:center"
+          onclick="document.getElementById('login-username').value='user1';document.getElementById('login-password').value='user123'">
+          👤 User
+        </button>
+      </div>
+    </div>
+
+    <!-- Register Form -->
+    <div id="auth-register-form" style="display:none">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="reg-name" placeholder="Your name" autocomplete="name">
+      </div>
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="reg-username" placeholder="Choose username" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="reg-password" placeholder="Min 6 characters" autocomplete="new-password"
+               onkeypress="if(event.key==='Enter')handleRegister()">
+      </div>
+      <div class="form-error" id="reg-error"></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px" onclick="handleRegister()">Create Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- Scripts -->
+<script src="data/movies.js"></script>
+<script src="js/state.js"></script>
+<script src="js/ui.js"></script>
+
+<script>
+// Update admin button visibility after nav state update
+const _origUpdateNav = updateNavState;
+updateNavState = function() {
+  _origUpdateNav();
+  const adminBtn = document.getElementById('nav-admin-btn');
+  if (adminBtn) adminBtn.style.display = appState.currentUser?.role === 'admin' ? 'flex' : 'none';
+  const themeBtn = document.getElementById('theme-btn');
+  if (themeBtn) themeBtn.textContent = appState.theme === 'dark' ? '☀️' : '🌙';
+};
+updateNavState();
+</script>
+
+</body>
+</html>
