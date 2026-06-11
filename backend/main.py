@@ -24,6 +24,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from fastapi import Request
+@app.middleware("http")
+async def add_tmdb_key_header(request: Request, call_next):
+    tmdb_key = request.headers.get("x-tmdb-key") or request.headers.get("X-TMDB-Key")
+    if tmdb_key:
+        tmdb_service.TMDB_API_KEY = tmdb_key
+    response = await call_next(request)
+    return response
+
 # Initialize database on startup
 @app.on_event("startup")
 def startup_event():

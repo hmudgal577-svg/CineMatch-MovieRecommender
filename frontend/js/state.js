@@ -286,9 +286,19 @@ class AppState {
 
   // TMDB ENHANCEMENTS
   async getTmdbConfig() {
+    const localKey = localStorage.getItem('cinematch_tmdb_key');
+    if (localKey) {
+      return { api_key: localKey };
+    }
     try {
       const res = await fetch(`${API_BASE}/admin/config/tmdb`);
-      if (res.ok) return await res.json();
+      if (res.ok) {
+        const data = await res.json();
+        if (data.api_key) {
+          localStorage.setItem('cinematch_tmdb_key', data.api_key);
+        }
+        return data;
+      }
     } catch (e) {
       console.error("Failed to get TMDB config:", e);
     }
@@ -296,6 +306,7 @@ class AppState {
   }
 
   async saveTmdbConfig(apiKey) {
+    localStorage.setItem('cinematch_tmdb_key', apiKey);
     try {
       const res = await fetch(`${API_BASE}/admin/config/tmdb`, {
         method: "POST",
@@ -306,10 +317,11 @@ class AppState {
     } catch (e) {
       console.error("Failed to save TMDB config:", e);
     }
-    return { success: false };
+    return { success: true, api_key: apiKey };
   }
 
   async isTmdbConfigured() {
+    if (localStorage.getItem('cinematch_tmdb_key')) return true;
     try {
       const res = await fetch(`${API_BASE}/tmdb/status`);
       if (res.ok) {
@@ -324,7 +336,13 @@ class AppState {
 
   async searchTmdb(query, page = 1) {
     try {
-      const res = await fetch(`${API_BASE}/tmdb/search?query=${encodeURIComponent(query)}&page=${page}`);
+      const headers = {};
+      const localKey = localStorage.getItem('cinematch_tmdb_key');
+      if (localKey) headers['X-TMDB-Key'] = localKey;
+
+      const res = await fetch(`${API_BASE}/tmdb/search?query=${encodeURIComponent(query)}&page=${page}`, {
+        headers: headers
+      });
       if (res.ok) return await res.json();
     } catch (e) {
       console.error("Failed to search TMDB:", e);
@@ -334,7 +352,13 @@ class AppState {
 
   async getTrendingTmdb(page = 1) {
     try {
-      const res = await fetch(`${API_BASE}/tmdb/trending?page=${page}`);
+      const headers = {};
+      const localKey = localStorage.getItem('cinematch_tmdb_key');
+      if (localKey) headers['X-TMDB-Key'] = localKey;
+
+      const res = await fetch(`${API_BASE}/tmdb/trending?page=${page}`, {
+        headers: headers
+      });
       if (res.ok) return await res.json();
     } catch (e) {
       console.error("Failed to fetch trending from TMDB:", e);
@@ -344,8 +368,13 @@ class AppState {
 
   async importTmdbMovie(tmdbId) {
     try {
+      const headers = {};
+      const localKey = localStorage.getItem('cinematch_tmdb_key');
+      if (localKey) headers['X-TMDB-Key'] = localKey;
+
       const res = await fetch(`${API_BASE}/tmdb/import/${tmdbId}`, {
-        method: "POST"
+        method: "POST",
+        headers: headers
       });
       const data = await res.json();
       if (res.ok) {
@@ -367,7 +396,13 @@ class AppState {
 
   async getTmdbMovieVideos(tmdbId) {
     try {
-      const res = await fetch(`${API_BASE}/tmdb/movie/${tmdbId}/videos`);
+      const headers = {};
+      const localKey = localStorage.getItem('cinematch_tmdb_key');
+      if (localKey) headers['X-TMDB-Key'] = localKey;
+
+      const res = await fetch(`${API_BASE}/tmdb/movie/${tmdbId}/videos`, {
+        headers: headers
+      });
       if (res.ok) return await res.json();
     } catch (e) {
       console.error("Failed to get TMDB videos:", e);

@@ -8,8 +8,8 @@ venv/
 ENV/
 
 # Databases
-backend/cinematch.db
 *.db
+!backend/cinematch.db
 *.sqlite3
 
 # IDE / System

@@ -674,6 +674,17 @@ function shareMovie(movieId) {
 // ── AUTH MODAL ──
 let authMode = 'login';
 function openAuthModal() {
+  const loginUser = document.getElementById('login-username');
+  const loginPass = document.getElementById('login-password');
+  const regName = document.getElementById('reg-name');
+  const regUser = document.getElementById('reg-username');
+  const regPass = document.getElementById('reg-password');
+  if (loginUser) loginUser.value = '';
+  if (loginPass) loginPass.value = '';
+  if (regName) regName.value = '';
+  if (regUser) regUser.value = '';
+  if (regPass) regPass.value = '';
+
   document.getElementById('auth-modal').querySelector('.modal').classList.add('auth-modal');
   openModal('auth-modal');
   setAuthTab('login');
